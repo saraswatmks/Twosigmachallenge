@@ -151,38 +151,23 @@ join[,bprice_median := median(price),manager_id]
 
 
 ################skip round 2 features#################
+######################## round 3###########################
+setDT(train)
+train[,features := ifelse(map(features, is_empty),"Nofeat",features)]
+
 feat_train <- data.table(listing_id = rep(unlist(train$listing_id), lapply(train$features, length)), features = unlist(train$features), target = rep(unlist(train$interest_level), lapply(train$features, length)))
 feat_train$target[1:10]
 feat_train[,target := as.integer(as.factor(target))-1] #medium 2, low 1, high 0
 
 feat_train[,feat_ave := mean(target), features]
 feat_train[,summary(feat_ave)]
+feat_train
 
 feat_train[,feat_super_ave := mean(feat_ave), listing_id]
-dim(unique(feat_train[,.(listing_id,feat_super_ave)]))
+un_Feat <- unique(feat_train[,.(listing_id,feat_super_ave)])
 
 
-
-feat_case <- dcast(data = feat_train, formula = listing_id ~ features, fun.aggregate = , value.var = 'target')
-
-
-
-
-#
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+train_one <- merge(train_one,un_Feat,by="listing_id",all.x = T)
 
 
 dtrain <- xgb.DMatrix(data = as.matrix(train_one[,-c('listing_id','interest_level'),with=F]), label=target)
@@ -219,6 +204,8 @@ cv_clf <- xgb.cv(params = param
 #0.790507
 
 
+
+#now starting with round 4 features#################
 
 
 
